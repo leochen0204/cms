@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>CMS Renderer Test</title>
+  </head>
+  <body>
+    <button onclick="loadRenderer()">Load Renderer</button>
+    <div id="cms-content"></div>
+
+    <script>
+      // 測試資料
+      const testData = {
+        children: [
+          {
+            id: 'text-1',
+            type: 'text',
+            props: {
+              content: '🎉 CMS 渲染器載入成功！',
+              fontSize: 24,
+              color: '#333333',
+              size: { width: 400, height: 40 },
+            },
+            children: [],
+            parentId: null,
+          },
+        ],
+      };
+
+      async function loadRenderer() {
+        try {
+          // 載入 manifest
+          console.log('📦 載入構建檔案');
+          const manifest = await fetch('/manifest.json').then(r =>
+            r.json()
+          );
+          console.log('Manifest:', manifest);
+
+          // 獲取渲染器檔案名稱
+          const fileName = manifest['src/domains/renderer/standaloneRenderer.ts'].file;
+          console.log('Renderer file:', fileName);
+
+          // 動態載入 script (IIFE format, 不需要 type="module")
+          return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = `/${fileName}`;
+            script.onload = () => {
+              console.log('✅ 渲染器載入成功');
+
+              // 渲染（options: { root }）
+              window.cmsAppRenderer('cms-content', { root: testData });
+              resolve();
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        } catch (error) {
+          console.error('❌ 載入失敗:', error);
+        }
+      }
+      window.loadRenderer = loadRenderer;
+    </script>
+  </body>
+</html>
